@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import styled from "@emotion/styled";
+import { obtenerDiferenciaYear, calcularMarca, obtenerPlan } from "../helper";
 
 const Campo = styled.div`
   display: flex;
@@ -41,12 +42,23 @@ const Boton = styled.button`
   }
 `;
 
+const Error = styled.div`
+  background-color: red;
+  color: #fff;
+  padding: 1rem;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 2rem;
+`;
+
 const Formulario = () => {
   const [datos, guardarDatos] = useState({
     marca: "",
     year: "",
     plan: "",
   });
+
+  const [error, guardarError] = useState(false);
 
   // extraer valores del state
   const { marca, year, plan } = datos;
@@ -56,8 +68,45 @@ const Formulario = () => {
     guardarDatos({ ...datos, [e.target.name]: e.target.value });
   };
 
+  // Cuando el usuario presiona submit
+  const cotizarSeguro = (e) => {
+    e.preventDefault();
+
+    if (marca.trim() === "" || year.trim === "" || plan.trim() === "") {
+      guardarError(true);
+      return;
+    }
+
+    guardarError(false);
+
+    // Empezamos con 2000€ de seguro de base
+    let resultado = 2000;
+
+    // obtener la diferencia de años
+    const diferencia = obtenerDiferenciaYear(year);
+
+    // por cada año hay que restar el 3%
+    resultado -= (diferencia * 3 * resultado) / 100;
+
+    // Americano 15%
+    // Asiatico 5%
+    // Europeo 30%
+    resultado = calcularMarca(marca) * resultado;
+
+    // Basico aumenta 20%
+    // Completo 50%
+    const incrementoPlan = obtenerPlan(plan);
+    resultado = parseFloat(incrementoPlan * resultado).toFixed(2);
+
+    console.log(resultado);
+
+    // Total
+  };
+
   return (
-    <form>
+    <form onSubmit={cotizarSeguro}>
+      {error ? <Error>Todos los campos son obligatorios</Error> : null}
+
       <Campo>
         <Label>Marca</Label>
         <Select name="marca" value={marca} onChange={obtenerInformacion}>
@@ -72,7 +121,6 @@ const Formulario = () => {
         <Label>Año</Label>
         <Select name="year" value={year} onChange={obtenerInformacion}>
           <option value="">-- Seleccione --</option>
-          <option value="2021">2021</option>
           <option value="2020">2020</option>
           <option value="2019">2019</option>
           <option value="2018">2018</option>
@@ -82,6 +130,7 @@ const Formulario = () => {
           <option value="2014">2014</option>
           <option value="2013">2013</option>
           <option value="2012">2012</option>
+          <option value="2011">2011</option>
         </Select>
       </Campo>
 
@@ -105,7 +154,7 @@ const Formulario = () => {
         Completo
       </Campo>
 
-      <Boton type="button">Cotizar</Boton>
+      <Boton type="submit">Cotizar</Boton>
     </form>
   );
 };
